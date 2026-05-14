@@ -1,0 +1,40 @@
+[project]
+name = "opentele"
+version = "1.16.0"
+dependencies = [
+    "pyqt5>=5.15.11",
+    "telethon>=1.43.2",
+    "tgcrypto-pyrofork>=1.2.8",
+]
+requires-python = ">=3.13"
+authors = [{ name = "thedemons", email = "thedemons@gmail.com" }]
+maintainers = [
+    { name = "AlreadyNobody" },
+    { name = "iamlostshe", email = "i@iamlostshe.ru" },
+]
+description = "A Python Telegram API Library for converting between tdata and telethon sessions, with built-in official Telegram APIs."
+readme = "README.md"
+license = "MIT"
+keywords = ["tdata", "tdesktop", "telegram", "telethon", "opentele"]
+classifiers = [
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Development Status :: 5 - Production/Stable",
+]
+
+[project.urls]
+Homepage = "https://github.com/thedemons/opentele"
+Documentation = "https://opentele.readthedocs.io/"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # TODO: shared - architecture
+    "F401", "F403", "TID252",
+
+    # Docstrings
+    "D100",
+]
