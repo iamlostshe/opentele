@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 # Copyright (c) 2019 Niklas Rosenstein
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,17 +18,17 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+import os
 import typing as t
 
 import docspec
-import os
 
 
 class HighlightResolver:
-    def __init__(self, modules: t.List[docspec.Module]) -> None:
+    def __init__(self, modules: list[docspec.Module]) -> None:
         self.modules = modules
         self.dummyClass = docspec.Class(
-            "dummy_class", None, None, None, None, None, None, None, None
+            "dummy_class", None, None, None, None, None, None, None, None,
         )
 
     def GetObjectID(self, obj: docspec.ApiObject) -> str:
@@ -44,7 +43,7 @@ class HighlightResolver:
             obj = obj.parent
         return obj
 
-    def FindModuleByName(self, moduleName: str) -> t.Optional[docspec.Module]:
+    def FindModuleByName(self, moduleName: str) -> docspec.Module | None:
         for module in self.modules:
             if module.name == moduleName:
                 return module
@@ -53,14 +52,14 @@ class HighlightResolver:
     def FindRefInModule(
         self,
         module: docspec.Module,
-        refNames: t.List[str],
-        typeFilter: t.List[t.Type[docspec.ApiObject]] = [],
-    ) -> t.Optional[docspec.ApiObject]:
+        refNames: list[str],
+        typeFilter: list[type[docspec.ApiObject]] = [],
+    ) -> docspec.ApiObject | None:
 
         if isinstance(refNames, str):
             refNames = [refNames]
 
-        def find(module: docspec.Module, name: str) -> t.Optional[docspec.ApiObject]:
+        def find(module: docspec.Module, name: str) -> docspec.ApiObject | None:
 
             for member in module.members:
                 if (
@@ -87,15 +86,13 @@ class HighlightResolver:
     def FindAllReference(
         self,
         obj: docspec.ApiObject,
-        refNames: t.List[str],
-        typeFilter: t.List[t.Type[docspec.ApiObject]] = [],
+        refNames: list[str],
+        typeFilter: list[type[docspec.ApiObject]] = [],
         excpt: docspec.ApiObject = None,
         inherited: bool = False,
-    ) -> t.Tuple[t.List[docspec.ApiObject], t.List[docspec.ApiObject]]:
+    ) -> tuple[list[docspec.ApiObject], list[docspec.ApiObject]]:
+        """Find all the references in all files
         """
-        Find all the references in all files
-        """
-
         easyFind = self.FindRefInModule(obj, refNames[-1], typeFilter)
         hardFind = self.FindRefInModule(obj, refNames, typeFilter)
         easyResults = [easyFind] if easyFind != None else []
@@ -105,7 +102,7 @@ class HighlightResolver:
             for member in obj.members:
                 if member != excpt:
                     search = self.FindAllReference(
-                        member, refNames, typeFilter, None, True
+                        member, refNames, typeFilter, None, True,
                     )
                     easyResults.extend(search[0])
                     hardResults.extend(search[1])
@@ -118,7 +115,7 @@ class HighlightResolver:
                 for module in self.modules:
                     if module != excpt:
                         search = self.FindAllReference(
-                            module, refNames, typeFilter, None, True
+                            module, refNames, typeFilter, None, True,
                         )
                         easyResults.extend(search[0])
                         hardResults.extend(search[1])
@@ -132,8 +129,8 @@ class HighlightResolver:
     def resolve_ref(
         self,
         reference: str,
-        typeFilter: t.List[t.Type[docspec.ApiObject]] = [],
-    ) -> t.Optional[docspec.ApiObject]:
+        typeFilter: list[type[docspec.ApiObject]] = [],
+    ) -> docspec.ApiObject | None:
 
         obj = self.modules[0]
         while True:

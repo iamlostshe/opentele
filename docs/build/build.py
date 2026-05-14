@@ -1,8 +1,10 @@
-import os, sys
+import os
+import sys
 
 
 def getsitepackages():
-    import subprocess, re
+    import re
+    import subprocess
 
     command = "pip show mkdocs-material"
     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
@@ -39,7 +41,7 @@ def pre_build():
         mv_from = os.path.join(build_dir, file)
         mv_to = os.path.join(pymdownx_dir, file)
 
-        print("Renaming {} to {}".format(mv_from, mv_to))
+        print(f"Renaming {mv_from} to {mv_to}")
 
         assert os.path.isfile(mv_from)
         os.rename(mv_from, mv_to)
@@ -57,7 +59,7 @@ def post_build():
         mv_from = os.path.join(pymdownx_dir, file)
         mv_to = os.path.join(build_dir, file)
 
-        print("Renaming {} to {}".format(mv_from, mv_to))
+        print(f"Renaming {mv_from} to {mv_to}")
         os.rename(mv_from, mv_to)
 
     highlight_py = os.path.join(pymdownx_dir, "highlight.py")

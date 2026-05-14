@@ -1,10 +1,12 @@
 from __future__ import annotations
-from .configs import *
-from . import shared as td
 
 import hashlib
 import os
+
 import tgcrypto
+
+from . import shared as td
+from .configs import *
 
 # if TYPE_CHECKING:
 #     from ..opentele import *
@@ -29,14 +31,14 @@ class Storage(BaseObject):
         def __init__(self) -> None:
 
             self.fallbackConfigLegacyDcOptions: td.MTP.DcOptions = td.MTP.DcOptions(
-                td.MTP.Environment.Production
+                td.MTP.Environment.Production,
             )
             self.fallbackConfigLegacyChatSizeMax = 0
             self.fallbackConfigLegacySavedGifsLimit = 0
             self.fallbackConfigLegacyStickersRecentLimit = 0
             self.fallbackConfigLegacyStickersFavedLimit = 0
             self.fallbackConfigLegacyMegagroupSizeMax = 0
-            self.fallbackConfigLegacyTxtDomainString = str()
+            self.fallbackConfigLegacyTxtDomainString = ""
             self.fallbackConfig = QByteArray()
 
             self.cacheTotalSizeLimit = 0
@@ -157,7 +159,7 @@ class Storage(BaseObject):
             self.stream = QDataStream()
             self.stream.setDevice(self.buffer)
 
-            self.md5 = bytes()
+            self.md5 = b""
             self.fullSize = 0
 
         def writeData(self, data: QByteArray):
@@ -225,7 +227,7 @@ class Storage(BaseObject):
         encrypted.resize(0x10 + fullSize)  # 128bit of sha1 - key128, sizeof(data), data
 
         encrypted = encrypted[:0x10] + Storage.aesEncryptLocal(
-            toEncrypt, key, encrypted
+            toEncrypt, key, encrypted,
         )
 
         return encrypted
@@ -264,7 +266,7 @@ class Storage(BaseObject):
 
                 if magic != TDF_MAGIC:
                     tries_exception = TDataInvalidMagic(
-                        "Invalid magic {magic} in file {fileName}"
+                        "Invalid magic {magic} in file {fileName}",
                     )
                     file.close()
                     continue
@@ -285,7 +287,7 @@ class Storage(BaseObject):
 
                 if check_md5.hexdigest() != md5.hex():
                     tries_exception = TDataInvalidCheckSum(
-                        "Invalid checksum {check_md5.hexdigest()} in file {fileName}"
+                        "Invalid checksum {check_md5.hexdigest()} in file {fileName}",
                     )
                     file.close()
                     continue
@@ -305,16 +307,16 @@ class Storage(BaseObject):
 
                 file.close()
                 return result
-            except IOError as e:
+            except OSError:
                 pass
 
         raise tries_exception if tries_exception else TFileNotFound(
-            f"Could not open {fileName}"
+            f"Could not open {fileName}",
         )
 
     @staticmethod
     def ReadEncryptedFile(
-        fileName: str, basePath: str, authKey: td.AuthKey
+        fileName: str, basePath: str, authKey: td.AuthKey,
     ) -> FileReadDescriptor:
 
         result = Storage.ReadFile(fileName, basePath)
@@ -348,7 +350,7 @@ class Storage(BaseObject):
 
     @staticmethod
     def ReadSetting(
-        blockId: int, stream: QDataStream, version: int, context: ReadSettingsContext
+        blockId: int, stream: QDataStream, version: int, context: ReadSettingsContext,
     ) -> bool:  # pragma: no cover
 
         if blockId == dbi.DcOptionOldOld:
@@ -359,7 +361,7 @@ class Storage(BaseObject):
             ExpectStreamStatus(stream)
 
             context.fallbackConfigLegacyDcOptions.constructAddOne(
-                dcId, td.MTP.DcOptions.Flag(0), ip, port, bytes()
+                dcId, td.MTP.DcOptions.Flag(0), ip, port, b"",
             )
             context.legacyRead = True
 
@@ -372,7 +374,7 @@ class Storage(BaseObject):
             ExpectStreamStatus(stream)
 
             context.fallbackConfigLegacyDcOptions.constructAddOne(
-                dcIdWithShift, flags, ip, port, bytes()
+                dcIdWithShift, flags, ip, port, b"",
             )
             context.legacyRead = True
 
@@ -440,7 +442,7 @@ class Storage(BaseObject):
             ExpectStreamStatus(stream)
 
             context.mtpLegacyKeys.append(
-                td.AuthKey(key, td.AuthKeyType.ReadFromFile, dcId)
+                td.AuthKey(key, td.AuthKeyType.ReadFromFile, dcId),
             )
 
         elif blockId == dbi.MtpAuthorization:
@@ -454,7 +456,7 @@ class Storage(BaseObject):
 
     @staticmethod
     def CreateLocalKey(
-        salt: QByteArray, passcode: QByteArray = QByteArray()
+        salt: QByteArray, passcode: QByteArray = QByteArray(),
     ) -> td.AuthKey:
         hashKey = hashlib.sha512(salt)
         hashKey.update(passcode)
@@ -462,24 +464,24 @@ class Storage(BaseObject):
 
         iterationsCount = 1 if passcode.isEmpty() else 100000
         return td.AuthKey(
-            hashlib.pbkdf2_hmac("sha512", hashKey.digest(), salt, iterationsCount, 256)
+            hashlib.pbkdf2_hmac("sha512", hashKey.digest(), salt, iterationsCount, 256),
         )
 
     @staticmethod
     def CreateLegacyLocalKey(
-        salt: QByteArray, passcode: QByteArray = QByteArray()
+        salt: QByteArray, passcode: QByteArray = QByteArray(),
     ) -> td.AuthKey:
 
         iterationsCount = 1 if passcode.isEmpty() else 100000
         return td.AuthKey(
             hashlib.pbkdf2_hmac(
-                "sha512", passcode.data(), salt.data(), iterationsCount, 256
-            )
+                "sha512", passcode.data(), salt.data(), iterationsCount, 256,
+            ),
         )
 
     @staticmethod
     def aesEncryptLocal(
-        src: QByteArray, authKey: td.AuthKey, key128: QByteArray
+        src: QByteArray, authKey: td.AuthKey, key128: QByteArray,
     ) -> QByteArray:
         aesKey, aesIv = authKey.prepareAES_oldmtp(key128, False)
         encrypted = tgcrypto.ige256_encrypt(src, aesKey, aesIv)
@@ -487,7 +489,7 @@ class Storage(BaseObject):
 
     @staticmethod
     def aesDecryptLocal(
-        src: QByteArray, authKey: td.AuthKey, key128: QByteArray
+        src: QByteArray, authKey: td.AuthKey, key128: QByteArray,
     ) -> QByteArray:
         aesKey, aesIv = authKey.prepareAES_oldmtp(key128, False)
         decrypted = tgcrypto.ige256_decrypt(src, aesKey, aesIv)
@@ -508,15 +510,15 @@ class Storage(BaseObject):
         checkHash = hashlib.sha1(decrypted).digest()[:16]
         if checkHash != encryptedKey:
             raise TDataBadDecryptKey(
-                "Bad decrypt key, data not decrypted - incorrect password?"
+                "Bad decrypt key, data not decrypted - incorrect password?",
             )
 
         dataLen = int.from_bytes(
-            decrypted[:4], "little"
+            decrypted[:4], "little",
         )  # *(const uint32*)decrypted.constData();
         if (dataLen > decrypted.size()) or (dataLen <= fullLen - 16) or (dataLen < 4):
             raise TDataBadDecryptedDataSize(
-                "Bad decrypted part size: {encryptedSize}, fullLen: {fullLen}, decrypted size: {decrypted.__len__()}"
+                "Bad decrypted part size: {encryptedSize}, fullLen: {fullLen}, decrypted size: {decrypted.__len__()}",
             )
 
         decrypted.resize(dataLen)
@@ -548,8 +550,8 @@ class Storage(BaseObject):
 
     @staticmethod
     def ToFilePart(val: int):
-        result = str()
-        for i in range(0, 0x10):
+        result = ""
+        for i in range(0x10):
             v = val & 0xF
             if v < 0x0A:
                 result += chr(ord("0") + v)

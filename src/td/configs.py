@@ -1,45 +1,55 @@
 from __future__ import annotations
 
-from enum import IntEnum
-
-from ..exception import *
-from ..utils import *
-from ..api import *
-from .. import tl
-
-from typing import (
-    Union,
-    Callable,
-    TypeVar,
-    Type,
-    Optional,
-    List,
-    Dict,
-    Any,
-    TYPE_CHECKING,
+import asyncio
+from collections.abc import Callable
+from ctypes import (
+    c_int32 as int32,
+)
+from ctypes import (
+    c_int64 as int64,
+)
+from ctypes import (
+    c_short as short,
+)
+from ctypes import (
+    c_uint32 as uint32,
+)
+from ctypes import (
+    c_uint64 as uint64,
+)
+from ctypes import (
+    c_ushort as ushort,
 )
 from ctypes import (
     sizeof,
-    c_int32 as int32,
-    c_int64 as int64,
-    c_uint32 as uint32,
-    c_uint64 as uint64,
-    c_short as short,
-    c_ushort as ushort,
 )
+from enum import IntEnum
+from types import FunctionType
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
+
 from PyQt5.QtCore import (
+    QBuffer,
     QByteArray,
     QDataStream,
-    QBuffer,
-    QIODevice,
-    QSysInfo,
     QDir,
     QFile,
+    QIODevice,
+    QSysInfo,
 )
-from types import FunctionType
 
-import asyncio
-
+from .. import tl
+from ..api import *
+from ..exception import *
+from ..utils import *
 
 APP_VERSION = 3004000
 TDF_MAGIC = b"TDF$"
@@ -54,14 +64,12 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 
 class BareId(int):  # nocov
-    """
-    BareId
+    """BareId
     """
 
 
 class ChatIdType(BaseObject):  # nocov
-    """
-    ChatIdType
+    """ChatIdType
     """
 
     bare = BareId(0)
@@ -89,8 +97,7 @@ class FakeChatId(ChatIdType):  # nocov
 
 
 class PeerId(int):  # nocov
-    """
-    PeerId
+    """PeerId
     """
 
     kChatTypeMask = BareId(0xFFFFFFFFFFFF)
@@ -104,7 +111,7 @@ class PeerId(int):  # nocov
 
     @staticmethod
     def FromChatIdType(
-        id: typing.Union[UserId, ChatId, ChannelId, FakeChatId]
+        id: typing.Union[UserId, ChatId, ChannelId, FakeChatId],
     ) -> PeerId:
         return PeerId(id.bare | (BareId(id.kShift) << 48))
 
@@ -116,7 +123,7 @@ class PeerId(int):  # nocov
         if not legacy:
             return PeerId(serialized & (~flag))
 
-        PeerIdMask = int(0xFFFFFFFF)
+        PeerIdMask = 0xFFFFFFFF
         PeerIdTypeMask = 0xF00000000
         PeerIdUserShift = 0x000000000
         PeerIdChatShift = 0x100000000
@@ -126,13 +133,13 @@ class PeerId(int):  # nocov
         if (serialized & PeerIdTypeMask) == PeerIdUserShift:
             return PeerId.FromChatIdType(UserId(BareId(serialized & PeerIdMask)))
 
-        elif (serialized & PeerIdTypeMask) == PeerIdChatShift:
+        if (serialized & PeerIdTypeMask) == PeerIdChatShift:
             return PeerId.FromChatIdType(ChatId(BareId(serialized & PeerIdMask)))
 
-        elif (serialized & PeerIdTypeMask) == PeerIdChannelShift:
+        if (serialized & PeerIdTypeMask) == PeerIdChannelShift:
             return PeerId.FromChatIdType(ChannelId(BareId(serialized & PeerIdMask)))
 
-        elif (serialized & PeerIdTypeMask) == PeerIdFakeShift:
+        if (serialized & PeerIdTypeMask) == PeerIdFakeShift:
             return PeerId.FromChatIdType(FakeChatId(BareId(serialized & PeerIdMask)))
 
         return PeerId(0)
@@ -143,8 +150,7 @@ class FileKey(int):  # nocov
 
 
 class DcId(int):  # nocov
-    """
-    Data Center ID
+    """Data Center ID
     """
 
     kDcShift: DcId = 10000  # type: ignore
@@ -157,13 +163,12 @@ class DcId(int):  # nocov
     _5: DcId = 5  # type: ignore
 
     @staticmethod
-    def BareDcId(shiftedDcId: Union[ShiftedDcId, DcId]) -> DcId:
+    def BareDcId(shiftedDcId: ShiftedDcId | DcId) -> DcId:
         return DcId(shiftedDcId % DcId.kDcShift)
 
 
 class ShiftedDcId(DcId):  # nocov
-    """
-    Shifted Data Center ID
+    """Shifted Data Center ID
     """
 
     @staticmethod
@@ -172,8 +177,7 @@ class ShiftedDcId(DcId):  # nocov
 
 
 class BuiltInDc(BaseObject):  # type: ignore # nocov
-    """
-    Default DC that is hard-coded
+    """Default DC that is hard-coded
     """
 
     def __init__(self, id: DcId, ip: str, port: int):

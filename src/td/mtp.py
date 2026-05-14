@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from .configs import *
 from . import shared as td
+from .configs import *
 
 
 class MTP(BaseObject):  # nocov
-    """
-    [MTProto Protocal](https://core.telegram.org/mtproto)
+    """[MTProto Protocal](https://core.telegram.org/mtproto)
 
     This class is for further future developments and has no usage for now.
 
@@ -19,8 +18,7 @@ class MTP(BaseObject):  # nocov
     """
 
     class Environment(IntEnum):
-        """
-        Enviroment flag for MTP.Config
+        """Enviroment flag for MTP.Config
         ### Attributes:
             Production (`IntEnum`): Production Enviroment
             Test (`IntEnum`): Test Enviroment
@@ -30,13 +28,11 @@ class MTP(BaseObject):  # nocov
         Test = 1
 
     class RSAPublicKey(BaseObject):
-        """
-        To be added
+        """To be added
         """
 
     class DcOptions(BaseObject):
-        """
-        Data Center Options, providing information about DC ip, port,.. etc
+        """Data Center Options, providing information about DC ip, port,.. etc
         """
 
         kVersion = 2
@@ -53,15 +49,15 @@ class MTP(BaseObject):  # nocov
             return self._enviroment != MTP.Environment.Production
 
         def constructAddOne(
-            self, id: DcId, flags: MTP.DcOptions.Flag, ip: str, port: int, secret: bytes
+            self, id: DcId, flags: MTP.DcOptions.Flag, ip: str, port: int, secret: bytes,
         ):
             self.applyOneGuarded(DcId.BareDcId(id), flags, ip, port, secret)
 
         def applyOneGuarded(
-            self, id: DcId, flags: MTP.DcOptions.Flag, ip: str, port: int, secret: bytes
+            self, id: DcId, flags: MTP.DcOptions.Flag, ip: str, port: int, secret: bytes,
         ):
 
-            if not id in self._data:
+            if id not in self._data:
                 self._data[id] = []
             else:
                 for endpoint in self._data[id]:
@@ -69,7 +65,7 @@ class MTP(BaseObject):  # nocov
                         # skip this endpoint because it's already exists in the self._data
                         continue
 
-            endpoint = MTP.DcOptions.Endpoint(id, flags, ip, port, bytes())
+            endpoint = MTP.DcOptions.Endpoint(id, flags, ip, port, b"")
             self._data[id].append(endpoint)
 
         def constructFromBuiltIn(self) -> None:
@@ -80,7 +76,7 @@ class MTP(BaseObject):  # nocov
             def addToData(dcs: List[BuiltInDc], flags: MTP.DcOptions.Flag):
 
                 for dc in dcs:
-                    self.applyOneGuarded(dc.id, flags, dc.ip, dc.port, bytes())
+                    self.applyOneGuarded(dc.id, flags, dc.ip, dc.port, b"")
 
             if self.isTestMode():
                 addToData(BuiltInDc.kBuiltInDcsTest, MTP.DcOptions.Flag.f_static | 0)  # type: ignore
@@ -100,7 +96,7 @@ class MTP(BaseObject):  # nocov
 
             self._data.clear()
 
-            for i in range(0, count):
+            for i in range(count):
                 dcId = DcId(stream.readInt32())
                 flags = MTP.DcOptions.Flag(stream.readInt32())
                 port = stream.readInt32()
@@ -115,7 +111,7 @@ class MTP(BaseObject):  # nocov
                 ip = stream.readRawData(ipSize).decode("ascii")
 
                 kMaxSecretSize = 32
-                secret = bytes()
+                secret = b""
                 if version > 0:
                     secretSize = stream.readInt32()
 
@@ -181,8 +177,7 @@ class MTP(BaseObject):  # nocov
             return result
 
         class Address(int):
-            """
-            Connection flag used for MTP.DcOptions.Endpoint
+            """Connection flag used for MTP.DcOptions.Endpoint
 
             ### Attributes:
                 IPv4 (`int`): IPv4 connection
@@ -193,8 +188,7 @@ class MTP(BaseObject):  # nocov
             IPv6 = 1
 
         class Protocol(int):
-            """
-            Protocal flag used for MTP.DcOptions.Endpoint
+            """Protocal flag used for MTP.DcOptions.Endpoint
 
             ### Attributes:
                 Tcp (`int`): Tcp connection
@@ -205,8 +199,7 @@ class MTP(BaseObject):  # nocov
             Http = 1
 
         class Flag(int):
-            """
-            Flag used for MTP.DcOptions.Endpoint
+            """Flag used for MTP.DcOptions.Endpoint
 
             ### Attributes:
                 f_ipv6 (`int`): f_ipv6
@@ -227,8 +220,7 @@ class MTP(BaseObject):  # nocov
             MAX_FIELD = 1 << 10
 
         class Endpoint(BaseObject):
-            """
-            Data center endpoint
+            """Data center endpoint
 
             ### Attributes:
                 id (`DcId`): Data Center ID
@@ -253,8 +245,7 @@ class MTP(BaseObject):  # nocov
                 self.secret = secret
 
     class ConfigFields(BaseObject):
-        """
-        Configuration data for `MTP.Config`
+        """Configuration data for `MTP.Config`
 
         ### Attributes:
             chatSizeMax (`int`): `200`
@@ -316,14 +307,13 @@ class MTP(BaseObject):  # nocov
             self.callConnectTimeoutMs = 30000
             self.callPacketTimeoutMs = 10000
             self.webFileDcId = 4
-            self.txtDomainString = str()
+            self.txtDomainString = ""
             self.phoneCallsEnabled = True
             self.blockedMode = False
             self.captionLengthMax = 1024
 
     class Config(BaseObject):
-        """
-        Configuration of MTProto
+        """Configuration of MTProto
         ### Attributes:
             kVersion (`int`): `1`
         """
@@ -339,7 +329,7 @@ class MTP(BaseObject):  # nocov
             )
 
         def endpoints(
-            self, dcId: DcId = DcId._0
+            self, dcId: DcId = DcId._0,
         ) -> Dict[
             MTP.DcOptions.Address,
             Dict[MTP.DcOptions.Protocol, List[MTP.DcOptions.Endpoint]],
@@ -385,7 +375,7 @@ class MTP(BaseObject):  # nocov
             stream.writeInt32(
                 MTP.Environment.Test
                 if self._dcOptions.isTestMode()
-                else MTP.Environment.Production
+                else MTP.Environment.Production,
             )
 
             stream << options
@@ -444,12 +434,12 @@ class MTP(BaseObject):  # nocov
                 vtype = type(field)
                 if vtype == int:
                     return stream.readInt32()  # type: ignore
-                elif vtype == bool:
+                if vtype == bool:
                     return stream.readInt32() == 1  # type: ignore
-                elif vtype == str:
+                if vtype == str:
                     return stream.readQString()  # type: ignore
 
-                raise ValueError()
+                raise ValueError
 
             dcOptionsSerialized = QByteArray()
             stream >> dcOptionsSerialized

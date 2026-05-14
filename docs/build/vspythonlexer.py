@@ -1,33 +1,33 @@
-import re
 import keyword
+import re
 
+from pygments import unistring as uni
 from pygments.lexer import (
     Lexer,
     RegexLexer,
-    include,
     bygroups,
-    using,
-    default,
-    words,
     combined,
+    default,
     do_insertions,
+    include,
     this,
+    using,
+    words,
 )
-from pygments.util import get_bool_opt, shebang_matches
 from pygments.token import (
-    Text,
     Comment,
-    Operator,
+    Error,
+    Generic,
     Keyword,
     Name,
-    String,
     Number,
-    Punctuation,
-    Generic,
+    Operator,
     Other,
-    Error,
+    Punctuation,
+    String,
+    Text,
 )
-from pygments import unistring as uni
+from pygments.util import get_bool_opt, shebang_matches
 
 __all__ = [
     "VSPythonLexer",
@@ -37,8 +37,7 @@ line_re = re.compile(".*?\n")
 
 
 class VSPythonLexer(RegexLexer):
-    """
-    For `Python <http://www.python.org>`_ source code (version 3.x).
+    """For `Python <http://www.python.org>`_ source code (version 3.x).
 
     .. versionadded:: 0.10
 
@@ -101,7 +100,7 @@ class VSPythonLexer(RegexLexer):
             (r'[^\\\'"%{\n]+', ttype),
             (r'[\'"\\]', ttype),
             # unhandled string formatting sign
-            (r"%|(\{{1,2})", ttype)
+            (r"%|(\{{1,2})", ttype),
             # newlines are an error (use "nl" state)
         ]
 
@@ -308,7 +307,7 @@ class VSPythonLexer(RegexLexer):
                 r"(?![ \t]*(?:"  # not followed by...
                 r"[:,;=^&|@~)\]}]|(?:"
                 + r"|".join(  # characters and keywords that mean this isn't
-                    keyword.kwlist
+                    keyword.kwlist,
                 )
                 + r")\b))",  # pattern matching
                 bygroups(Text, Keyword),
@@ -697,7 +696,7 @@ class VSPythonLexer(RegexLexer):
                 r'\\([\\abfnrtv"\']|\n|N\{.*?\}|u[a-fA-F0-9]{4}|'
                 r"U[a-fA-F0-9]{8}|x[a-fA-F0-9]{2}|[0-7]{1,3})",
                 String.Escape,
-            )
+            ),
         ],
         "fstrings-single": fstring_rules(String.Single),
         "fstrings-double": fstring_rules(String.Double),

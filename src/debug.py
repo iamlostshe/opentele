@@ -1,9 +1,7 @@
+import atexit
 import inspect
 import os
-
 import time
-import atexit
-
 import typing as t
 
 IS_DEBUG_MODE = False
@@ -16,9 +14,9 @@ if IS_DEBUG_MODE:
     _T = t.TypeVar("_T")
     _R = t.TypeVar("_R")
 
-    class DebugInfo(object):
+    class DebugInfo:
         def __init__(self) -> None:
-            self.list: t.List[t.List[str, int, int, int]] = []
+            self.list: list[list[str, int, int, int]] = []
 
         def add(self, name, total_called, total_time) -> None:
             self.list.append(
@@ -27,7 +25,7 @@ if IS_DEBUG_MODE:
                     total_called,
                     total_time,
                     round(total_time / total_called * 1000, 4),
-                )
+                ),
             )
 
         def on_exit(self):
@@ -77,7 +75,7 @@ if IS_DEBUG_MODE:
 
             if hasattr(self, "__owner__"):
                 result, diff = DebugMethod.__call2__(
-                    self, self.__owner__, *args, **kwargs
+                    self, self.__owner__, *args, **kwargs,
                 )
             else:
                 result, diff = DebugMethod.__call2__(self, *args, **kwargs)
@@ -93,8 +91,7 @@ if IS_DEBUG_MODE:
                     return f"{self.__ownername__}()"
 
                 return f"{self.__ownername__}.{self.__fname__}()"
-            else:
-                return f"{self.__fget__.__name__}()"
+            return f"{self.__fget__.__name__}()"
 
         def on_exit(self):
             if self.__total_called > 0:
@@ -133,11 +130,11 @@ if IS_DEBUG_MODE:
     def parse_arg(value) -> str:  # pragma: no cover
         if isinstance(value, type):
             return value.__name__
-        elif isinstance(value, str):
+        if isinstance(value, str):
             return f"'{value}'"
-        elif isinstance(value, int):
+        if isinstance(value, int):
             return f"{value}"
-        elif isinstance(value, object):
+        if isinstance(value, object):
             return value.__class__.__name__ + "(...)"
         return value
 

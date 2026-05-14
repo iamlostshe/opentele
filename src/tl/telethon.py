@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-from .configs import *
-from . import shared as tl
+import logging
+import warnings
+from collections.abc import Awaitable
 
 from telethon.errors.rpcerrorlist import (
-    PasswordHashInvalidError,
     AuthTokenAlreadyAcceptedError,
     AuthTokenExpiredError,
     AuthTokenInvalidError,
     FreshResetAuthorisationForbiddenError,
     HashInvalidError,
+    PasswordHashInvalidError,
 )
 from telethon.tl.types import TypeInputClientProxy, TypeJSONValue
 from telethon.tl.types.auth import LoginTokenMigrateTo
-import logging
-import warnings
-from typing import Awaitable
+
+from . import shared as tl
+from .configs import *
 
 
 @extend_override_class
@@ -65,8 +66,7 @@ class CustomInitConnectionRequest(functions.InitConnectionRequest):
 
 @extend_class
 class TelegramClient(telethon.TelegramClient, BaseObject):
-    """
-    Extended version of [telethon.TelegramClient](https://github.com/LonamiWebs/Telethon/blob/master/telethon/_client/telegramclient.py#L23)
+    """Extended version of [telethon.TelegramClient](https://github.com/LonamiWebs/Telethon/blob/master/telethon/_client/telegramclient.py#L23)
 
     ### Methods:
         FromTDesktop():
@@ -150,8 +150,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         base_logger: Union[str, logging.Logger] = None,
         receive_updates: bool = True,
     ):
-        """
-        !skip
+        """!skip
         This is the abstract base class for the client. It defines some
         basic stuff like connecting, switching data center, etc, and
         leaves the `__call__` unimplemented.
@@ -353,8 +352,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         self._user_id = id
 
     async def GetSessions(self) -> Optional[types.account.Authorizations]:
-        """
-        Get all logged-in sessions.
+        """Get all logged-in sessions.
 
         ### Returns:
             - Return an instance of `Authorizations` on success
@@ -362,8 +360,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         return await self(functions.account.GetAuthorizationsRequest())  # type: ignore
 
     async def GetCurrentSession(self) -> Optional[types.Authorization]:
-        """
-        Get current logged-in session.
+        """Get current logged-in session.
 
         ### Returns:
             Return `telethon.types.Authorization` on success.
@@ -378,8 +375,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         )
 
     async def TerminateSession(self, hash: int):
-        """
-        Terminate a specific session
+        """Terminate a specific session
 
         ### Arguments:
             hash (`int`):
@@ -389,21 +385,19 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
             `FreshResetAuthorisationForbiddenError`: You can't log out other `sessions` if less than `24 hours` have passed since you logged on to the `current session`.
             `HashInvalidError`: The provided hash is invalid.
         """
-
         try:
             await self(functions.account.ResetAuthorizationRequest(hash))
 
-        except FreshResetAuthorisationForbiddenError as e:
+        except FreshResetAuthorisationForbiddenError:
             raise FreshResetAuthorisationForbiddenError(
-                "You can't logout other sessions if less than 24 hours have passed since you logged on the current session."
+                "You can't logout other sessions if less than 24 hours have passed since you logged on the current session.",
             )
 
-        except HashInvalidError as e:
+        except HashInvalidError:
             raise HashInvalidError("The provided hash is invalid.")
 
     async def TerminateAllSessions(self) -> bool:
-        """
-        Terminate all other sessions.
+        """Terminate all other sessions.
         """
         sessions = await self.GetSessions()
         if sessions == None:
@@ -416,8 +410,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         return True
 
     async def PrintSessions(self, sessions: types.account.Authorizations = None):
-        """
-        Pretty-print all logged-in sessions.
+        """Pretty-print all logged-in sessions.
 
         ### Arguments:
             sessions (`Authorizations`, default=`None`):
@@ -462,17 +455,16 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                     "Platform": session.platform,
                     "System": session.system_version,
                     "API_ID": session.api_id,
-                    "App name": "{} {}".format(session.app_name, session.app_version),
+                    "App name": f"{session.app_name} {session.app_version}",
                     "Official App": "✔" if session.official_app else "✖",
-                }
+                },
             )
             index += 1
 
         print(PrettyTable(table, [1]))
 
     async def is_official_app(self) -> bool:
-        """
-        Return `True` if this session was logged-in using an official app (`API`).
+        """Return `True` if this session was logged-in using an official app (`API`).
         """
         auth = await self.GetCurrentSession()
 
@@ -485,8 +477,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         api: Union[Type[APIData], APIData] = API.TelegramDesktop,
         password: str = None,
     ) -> TelegramClient:
-        """
-        Create a new session using the current session.
+        """Create a new session using the current session.
 
         ### Arguments:
             session (`str`, `Session`, default=`None`):
@@ -562,7 +553,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
             # switch DC for now because i can't handle LoginTokenMigrateTo...
             if newClient.session.dc_id != self.session.dc_id:
                 await newClient._switch_dc(self.session.dc_id)
-        except OSError as e:
+        except OSError:
             raise BaseException("Cannot connect")
 
         if await newClient.is_user_authorized():  # nocov
@@ -573,13 +564,13 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                 if currentAuth.api_id == api.api_id:
                     warnings.warn(
                         "\nCreateNewSession - a session file with the same name "
-                        "is already existed, returning the old session"
+                        "is already existed, returning the old session",
                     )
                 else:
                     warnings.warn(
                         "\nCreateNewSession - a session file with the same name "
                         "is already existed, but its api_id is different from "
-                        "the current one, it will be overwritten"
+                        "the current one, it will be overwritten",
                     )
 
                     disconnect = newClient.disconnect()
@@ -591,7 +582,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                     newClient.session.delete()
 
                     newClient = await self.QRLoginToNewClient(
-                        session=session, api=api, password=password, **kwargs
+                        session=session, api=api, password=password, **kwargs,
                     )
 
                 return newClient
@@ -619,7 +610,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                 if isinstance(qr_login._resp, types.auth.LoginTokenMigrateTo):
                     await newClient._switch_dc(qr_login._resp.dc_id)
                     qr_login._resp = await newClient(
-                        functions.auth.ImportLoginTokenRequest(qr_login._resp.token)
+                        functions.auth.ImportLoginTokenRequest(qr_login._resp.token),
                     )
 
                 # for the above reason, we should check if we're already authorized
@@ -632,11 +623,11 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                 # calculate when will the qr token expire
                 import datetime
 
-                time_now = datetime.datetime.now(datetime.timezone.utc)
+                time_now = datetime.datetime.now(datetime.UTC)
                 time_out = (qr_login.expires - time_now).seconds + 5
 
                 resp = await self(
-                    functions.auth.AcceptLoginTokenRequest(qr_login.token)
+                    functions.auth.AcceptLoginTokenRequest(qr_login.token),
                 )
 
                 await qr_login.wait(time_out)
@@ -655,15 +646,13 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
             except (TimeoutError, asyncio.TimeoutError) as e:
 
                 warnings.warn(
-                    "\nQRLoginToNewClient attemp {} failed because {}".format(
-                        attempt + 1, type(e)
-                    )
+                    f"\nQRLoginToNewClient attemp {attempt + 1} failed because {type(e)}",
                 )
                 timeout_err = TimeoutError(
-                    "Something went wrong, i couldn't perform the QR login process"
+                    "Something went wrong, i couldn't perform the QR login process",
                 )
 
-            except telethon.errors.SessionPasswordNeededError as e:
+            except telethon.errors.SessionPasswordNeededError:
 
                 # requires an 2fa password
 
@@ -671,7 +660,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                     password != None,
                     NoPasswordProvided(
                         "Two-step verification is enabled for this account.\n"
-                        "You need to provide the `password` to argument"
+                        "You need to provide the `password` to argument",
                     ),
                 )
 
@@ -680,8 +669,8 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                     pwd: types.account.Password = await newClient(functions.account.GetPasswordRequest())  # type: ignore
                     result = await newClient(
                         functions.auth.CheckPasswordRequest(
-                            pwd_mod.compute_check(pwd, password)  # type: ignore
-                        )
+                            pwd_mod.compute_check(pwd, password),  # type: ignore
+                        ),
                     )
 
                     # successful log in
@@ -694,7 +683,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                     raise PasswordIncorrect(e.__str__()) from e
 
             warnings.warn(
-                "\nQRLoginToNewClient attemp {} failed. Retrying..".format(attempt + 1)
+                f"\nQRLoginToNewClient attemp {attempt + 1} failed. Retrying..",
             )
 
         if timeout_err:
@@ -708,8 +697,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         api: Union[Type[APIData], APIData] = API.TelegramDesktop,
         password: str = None,
     ) -> td.TDesktop:
-        """
-        Convert this instance of `TelegramClient` to `TDesktop`
+        """Convert this instance of `TelegramClient` to `TDesktop`
 
         ### Arguments:
             flag (`LoginFlag`, default=`CreateNewSession`):
@@ -741,9 +729,8 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
             tdesk.SaveTData("new_tdata")
         ```
         """
-
         return await td.TDesktop.FromTelethon(
-            self, flag=flag, api=api, password=password
+            self, flag=flag, api=api, password=password,
         )
 
     @typing.overload
@@ -755,9 +742,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         api: Union[Type[APIData], APIData] = API.TelegramDesktop,
         password: str = None,
     ) -> TelegramClient:
-        """
-        
-        ### Arguments:
+        """### Arguments:
             account (`TDesktop`, `Account`):
                 The `TDesktop` or `Account` you want to convert from.
         
@@ -838,13 +823,13 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
             Expects(
                 account.isLoaded(),
                 TDesktopNotLoaded(
-                    "You need to load accounts from a tdata folder first"
+                    "You need to load accounts from a tdata folder first",
                 ),
             )
             Expects(
                 account.accountsCount > 0,
                 TDesktopHasNoAccount(
-                    "There is no account in this instance of TDesktop"
+                    "There is no account in this instance of TDesktop",
                 ),
             )
             assert account.mainAccount
@@ -858,7 +843,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
                 "\nIf you use an existing Telegram Desktop session "
                 "with unofficial API_ID and API_HASH, "
                 "Telegram might ban your account because of suspicious activities.\n"
-                "Please use the default APIs to get rid of this."
+                "Please use the default APIs to get rid of this.",
             )
 
         endpoints = account._local.config.endpoints(account.MainDcId)
@@ -877,27 +862,26 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
         # created to accept the qr login for the new session
         if flag == CreateNewSession:
             auth_session = MemorySession()
-        else:
-            # COPY STRAIGHT FROM TELETHON
-            # Determine what session object we have
-            if isinstance(session, str) or session is None:
-                try:
-                    auth_session = SQLiteSession(session)
-                except ImportError:
-                    warnings.warn(
-                        "The sqlite3 module is not available under this "
-                        "Python installation and no custom session "
-                        "instance was given; using MemorySession.\n"
-                        "You will need to re-login every time unless "
-                        "you use another session storage"
-                    )
-                    auth_session = MemorySession()
-            elif not isinstance(session, Session):
-                raise TypeError(
-                    "The given session must be a str or a Session instance."
+        # COPY STRAIGHT FROM TELETHON
+        # Determine what session object we have
+        elif isinstance(session, str) or session is None:
+            try:
+                auth_session = SQLiteSession(session)
+            except ImportError:
+                warnings.warn(
+                    "The sqlite3 module is not available under this "
+                    "Python installation and no custom session "
+                    "instance was given; using MemorySession.\n"
+                    "You will need to re-login every time unless "
+                    "you use another session storage",
                 )
-            else:  # session is instance of Session
-                auth_session = session
+                auth_session = MemorySession()
+        elif not isinstance(session, Session):
+            raise TypeError(
+                "The given session must be a str or a Session instance.",
+            )
+        else:  # session is instance of Session
+            auth_session = session
 
         auth_session.set_dc(endpoint.id, endpoint.ip, endpoint.port)  # type: ignore
         auth_session.auth_key = AuthKey(account.authKey.key)  # type: ignore
@@ -916,7 +900,7 @@ class TelegramClient(telethon.TelegramClient, BaseObject):
 
         # create new session by qrlogin
         return await client.QRLoginToNewClient(
-            session=session, api=api, password=password, **kwargs
+            session=session, api=api, password=password, **kwargs,
         )
 
 
@@ -933,8 +917,7 @@ def PrettyTable(table: List[Dict[str, Any]], addSplit: List[int] = []):
     for row in table:
         for label, value in row.items():
             text = str(value)
-            if padding[label] < len(text):
-                padding[label] = len(text)
+            padding[label] = max(padding[label], len(text))
 
     def addpadding(text: str, spaces: int):
         if not isinstance(text, str):
@@ -954,7 +937,7 @@ def PrettyTable(table: List[Dict[str, Any]], addSplit: List[int] = []):
         rows.append(
             "|".join(
                 addpadding(row[label], spaces + 2) for label, spaces in padding.items()
-            )
+            ),
         )
 
     result += f"|{splitter}|\n"

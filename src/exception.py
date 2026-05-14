@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 import inspect
 import types
 import typing
+
 from PyQt5.QtCore import QDataStream
 
 
 class OpenTeleException(BaseException):  # nocov
-    """
-    Base exception of the library.
+    """Base exception of the library.
     """
 
     def __init__(self, message: str = None, stack_index: int = 1) -> None:
@@ -67,150 +68,126 @@ class OpenTeleException(BaseException):  # nocov
 
 
 class TFileNotFound(OpenTeleException):
-    """
-    Could not find or open the file
+    """Could not find or open the file
     """
 
 
 class TDataInvalidMagic(OpenTeleException):
-    """
-    TData file has an invalid magic data, which is the first 4 bytes of the file\n
+    """TData file has an invalid magic data, which is the first 4 bytes of the file\n
     This usually mean that the file is corrupted or not in the supported formats
     """
 
 
 class TDataInvalidCheckSum(OpenTeleException):
-    """
-    TData file has an invalid checksum\n
+    """TData file has an invalid checksum\n
     This usually mean that the file is corrupted or not in the supported formats
     """
 
 
 class TDataBadDecryptKey(OpenTeleException):
-    """
-    Could not decrypt the data with this key\n
+    """Could not decrypt the data with this key\n
     This usually mean that the file is password-encrypted
     """
 
 
 class TDataWrongPasscode(OpenTeleException):
-    """
-    Wrong passcode to decrypt tdata folder\n
+    """Wrong passcode to decrypt tdata folder\n
     """
 
 
 class TDataBadEncryptedDataSize(OpenTeleException):
-    """
-    The encrypted data size part of the file is corrupted
+    """The encrypted data size part of the file is corrupted
     """
 
 
 class TDataBadDecryptedDataSize(OpenTeleException):
-    """
-    The decrypted data size part of the file is corrupted
+    """The decrypted data size part of the file is corrupted
     """
 
 
 class TDataBadConfigData(OpenTeleException):
-    """
-    TData contains bad config data that couldn't be parsed
+    """TData contains bad config data that couldn't be parsed
     """
 
 
 class QDataStreamFailed(OpenTeleException):
-    """
-    Could not stream data from QDataStream\n
+    """Could not stream data from QDataStream\n
     Please check the QDataStream.status() for more information
     """
 
 
 class AccountAuthKeyNotFound(OpenTeleException):
-    """
-    Account.authKey is missing, something went wrong
+    """Account.authKey is missing, something went wrong
     """
 
 
 class TDataReadMapDataFailed(OpenTeleException):
-    """
-    Could not read map data
+    """Could not read map data
     """
 
 
 class TDataReadMapDataIncorrectPasscode(OpenTeleException):
-    """
-    Could not read map data because of incorrect passcode
+    """Could not read map data because of incorrect passcode
     """
 
 
 class TDataAuthKeyNotFound(OpenTeleException):
-    """
-    Could not find authKey in TData
+    """Could not find authKey in TData
     """
 
 
 class MaxAccountLimit(OpenTeleException):
-    """
-    Maxed out limit for accounts per tdesktop client
+    """Maxed out limit for accounts per tdesktop client
     """
 
 
 class TDesktopUnauthorized(OpenTeleException):
-    """
-    TDesktop client is unauthorized
+    """TDesktop client is unauthorized
     """
 
 
 class TelethonUnauthorized(OpenTeleException):
-    """
-    Telethon client is unauthorized
+    """Telethon client is unauthorized
     """
 
 
 class TDataSaveFailed(OpenTeleException):
-    """
-    Could not save TDesktop to tdata folder
+    """Could not save TDesktop to tdata folder
     """
 
 
 class TDesktopNotLoaded(OpenTeleException):
-    """
-    TDesktop instance has no account
+    """TDesktop instance has no account
     """
 
 
 class TDesktopHasNoAccount(OpenTeleException):
-    """
-    TDesktop instance has no account
+    """TDesktop instance has no account
     """
 
 
 class TDAccountNotLoaded(OpenTeleException):
-    """
-    TDesktop account hasn't been loaded yet
+    """TDesktop account hasn't been loaded yet
     """
 
 
 class NoPasswordProvided(OpenTeleException):
-    """
-    You can't live without a password bro
+    """You can't live without a password bro
     """
 
 
 class PasswordIncorrect(OpenTeleException):
-    """
-    incorrect passwrd
+    """incorrect passwrd
     """
 
 
 class LoginFlagInvalid(OpenTeleException):
-    """
-    Invalid login flag
+    """Invalid login flag
     """
 
 
 class NoInstanceMatched(OpenTeleException):
-    """
-    Invalid login flag
+    """Invalid login flag
     """
 
 
@@ -258,7 +235,6 @@ def Expects(
     silent: bool = False,
     stack_index: int = 1,
 ) -> bool:
-
     """Expect a condition to be `True`, raise an `OpenTeleException` if it's not.
 
     ### Arguments:
@@ -287,7 +263,7 @@ def Expects(
 
 def Expects(
     condition: bool,
-    exception: typing.Union[OpenTeleException, str] = None,
+    exception: OpenTeleException | str = None,
     done: typing.Callable[[], None] = None,
     fail: typing.Callable[[OpenTeleException], None] = None,
     silent: bool = False,
@@ -314,16 +290,15 @@ def Expects(
             fail(exception)
         return condition
 
-    else:
-        stack = inspect.stack()
-        frame = stack[stack_index].frame
-        tb = types.TracebackType(None, frame, frame.f_lasti, frame.f_lineno)  # type: ignore
-        exception = exception.with_traceback(tb)
+    stack = inspect.stack()
+    frame = stack[stack_index].frame
+    tb = types.TracebackType(None, frame, frame.f_lasti, frame.f_lineno)  # type: ignore
+    exception = exception.with_traceback(tb)
 
-        if fail != None:
-            fail(exception)
+    if fail != None:
+        fail(exception)
 
-        raise exception
+    raise exception
 
 
 def ExpectStreamStatus(stream: QDataStream, message: str = "Could not stream data"):
@@ -331,6 +306,6 @@ def ExpectStreamStatus(stream: QDataStream, message: str = "Could not stream dat
         stream.status() == QDataStream.Status.Ok,
         stack_index=2,
         exception=QDataStreamFailed(
-            "Could not read keys count from mtp authorization.", stack_index=2
+            "Could not read keys count from mtp authorization.", stack_index=2,
         ),
     )

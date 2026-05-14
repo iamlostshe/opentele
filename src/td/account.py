@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from .configs import *
-from . import shared as td
+import logging
 
 from telethon.network.connection.connection import Connection
 from telethon.network.connection.tcpfull import ConnectionTcpFull
 from telethon.sessions.abstract import Session
 
-import logging
+from . import shared as td
+from .configs import *
 
 # if TYPE_CHECKING:
 #     from ..opentele import *
@@ -57,7 +57,7 @@ class MapData(BaseObject):  # nocov
             mapData = td.Storage.ReadFile("map", self.basePath)
         except OpenTeleException as e:
             raise TDataReadMapDataFailed(
-                "Could not read map data, find not found or couldn't be opened"
+                "Could not read map data, find not found or couldn't be opened",
             ) from e
 
         legacySalt, legacyKeyEncrypted, mapEncrypted = (
@@ -76,19 +76,19 @@ class MapData(BaseObject):  # nocov
             Expects(
                 legacySalt.size() == 32,
                 TDataReadMapDataFailed(
-                    f"Bad salt in map file, size: {legacySalt.size()}"
+                    f"Bad salt in map file, size: {legacySalt.size()}",
                 ),
             )
 
             legacyPasscodeKey = td.Storage.CreateLegacyLocalKey(
-                legacySalt, legacyPasscode
+                legacySalt, legacyPasscode,
             )
 
             try:
                 keyData = td.Storage.DecryptLocal(legacyKeyEncrypted, legacyPasscodeKey)
             except OpenTeleException as e:
                 raise TDataReadMapDataIncorrectPasscode(
-                    "Could not decrypt pass-protected key from map file, maybe bad password..."
+                    "Could not decrypt pass-protected key from map file, maybe bad password...",
                 ) from e
 
             localKey = td.AuthKey.FromStream(keyData.stream)
@@ -389,7 +389,7 @@ class MapData(BaseObject):  # nocov
             stream.writeUInt64(self._installedCustomEmojiKey)
             stream.writeUInt64(self._featuredCustomEmojiKey)
             stream.writeUInt64(self._archivedCustomEmojiKey)
-        
+
         if self._searchSuggestionsKey:
             stream.writeUInt32(lskType.lskSearchSuggestions)
             stream.writeUInt64(self._searchSuggestionsKey)
@@ -403,13 +403,11 @@ class MapData(BaseObject):  # nocov
 
 
 class StorageAccount(BaseObject):  # nocov
-    """
-    Storage account for reading and writing to tdata
+    """Storage account for reading and writing to tdata
     """
 
     def __init__(self, owner: Account, basePath: str, keyFile: str) -> None:
-        """
-        Create an instance of StorageAccount
+        """Create an instance of StorageAccount
 
         ### Arguments
             1. owner (Account):\n
@@ -421,13 +419,12 @@ class StorageAccount(BaseObject):  # nocov
             3. dataName (str):\n
                 dataName
         """
-
         self.__owner = owner
         self.__keyFile = keyFile
         self.__dataNameKey = td.Storage.ComputeDataNameKey(self.__keyFile)
         self.__baseGlobalPath = td.Storage.GetAbsolutePath(basePath)
         self.__basePath = td.Storage.PathJoin(
-            self.__baseGlobalPath, td.Storage.ToFilePart(self.__dataNameKey)
+            self.__baseGlobalPath, td.Storage.ToFilePart(self.__dataNameKey),
         )
         self.__localKey = None
 
@@ -437,15 +434,13 @@ class StorageAccount(BaseObject):  # nocov
 
     @property
     def owner(self) -> Account:
-        """
-        The TDesktop client that own this account
+        """The TDesktop client that own this account
         """
         return self.__owner
 
     @property
     def localKey(self) -> Optional[td.AuthKey]:
-        """
-        The key use to encrypt/decrypt data
+        """The key use to encrypt/decrypt data
         """
         return self.__localKey
 
@@ -472,7 +467,7 @@ class StorageAccount(BaseObject):  # nocov
     def baseGlobalPath(self, basePath):
         self.__baseGlobalPath = td.Storage.GetAbsolutePath(basePath)
         self.__basePath = td.Storage.PathJoin(
-            self.__baseGlobalPath, td.Storage.ToFilePart(self.__dataNameKey)
+            self.__baseGlobalPath, td.Storage.ToFilePart(self.__dataNameKey),
         )
 
     @property
@@ -527,13 +522,13 @@ class StorageAccount(BaseObject):  # nocov
 
             self.__config = td.MTP.Config.FromSerialized(serialized)
             return self.__config
-        except OpenTeleException as e:
+        except OpenTeleException:
             pass
 
         return td.MTP.Config(td.MTP.Environment.Production)
 
     def readMapWith(
-        self, localKey: td.AuthKey, legacyPasscode: QByteArray = QByteArray()
+        self, localKey: td.AuthKey, legacyPasscode: QByteArray = QByteArray(),
     ):
         # Intended for internal usage only
         try:
@@ -594,7 +589,7 @@ class StorageAccount(BaseObject):  # nocov
         serialized = self.owner.serializeMtpAuthorization()
         size = sizeof(uint32) + td.Serialize.bytearraySize(serialized)
         mtp = td.Storage.FileWriteDescriptor(
-            td.Storage.ToFilePart(dataNameKey), baseGlobalPath
+            td.Storage.ToFilePart(dataNameKey), baseGlobalPath,
         )
         data = td.Storage.EncryptedDescriptor(size)
         data.stream.writeInt32(dbi.MtpAuthorization)
@@ -617,7 +612,7 @@ class StorageAccount(BaseObject):  # nocov
             dataNameKey = self.__dataNameKey
 
         basePath = td.Storage.PathJoin(
-            baseGlobalPath, td.Storage.ToFilePart(dataNameKey)
+            baseGlobalPath, td.Storage.ToFilePart(dataNameKey),
         )
         self.writeMap(basePath)
 
@@ -628,8 +623,7 @@ class StorageAccount(BaseObject):  # nocov
 
 
 class Account(BaseObject):
-    """
-    Telegram Desktop account
+    """Telegram Desktop account
 
     ### Attributes:
         api (`API`):
@@ -658,7 +652,7 @@ class Account(BaseObject):
 
     """
 
-    kWideIdsTag: int = int(~0)
+    kWideIdsTag: int = ~0
 
     def __init__(
         self,
@@ -668,8 +662,7 @@ class Account(BaseObject):
         keyFile: str = None,
         index: int = 0,
     ) -> None:
-        """
-        Initialized a `TDesktop` account.
+        """Initialized a `TDesktop` account.
 
         You should use `TDesktop()` or `TDesktop.FromTelethon()` instead.
         Manually using `Account()` is not recommended. But this is here for your need anyway.
@@ -711,14 +704,13 @@ class Account(BaseObject):
         self.api = api
 
         self._local = StorageAccount(
-            self, self.basePath, td.Storage.ComposeDataString(self.__keyFile, index)
+            self, self.basePath, td.Storage.ComposeDataString(self.__keyFile, index),
         )
         self.index = index
 
     @property
     def api(self) -> APIData:
-        """
-        The API this acount is using.
+        """The API this acount is using.
         """
         return self.__api
 
@@ -730,22 +722,19 @@ class Account(BaseObject):
 
     @property
     def owner(self) -> td.TDesktop:
-        """
-        TDesktop client owner of this account.
+        """TDesktop client owner of this account.
         """
         return self.__owner
 
     @property
     def basePath(self) -> str:
-        """
-        The folder where tdata is stored.
+        """The folder where tdata is stored.
         """
         return self.__basePath
 
     @property
     def keyFile(self) -> str:
-        """
-        See `TDesktop.keyFile`
+        """See `TDesktop.keyFile`
         """
         return self.__keyFile
 
@@ -756,8 +745,7 @@ class Account(BaseObject):
 
     @property
     def localKey(self) -> Optional[td.AuthKey]:
-        """
-        Key used to encrypt and decrypt tdata.
+        """Key used to encrypt and decrypt tdata.
         """
         return self.__localKey
 
@@ -768,22 +756,19 @@ class Account(BaseObject):
 
     @property
     def authKey(self) -> Optional[td.AuthKey]:
-        """
-        The authorization key used to authorize this acocunt.
+        """The authorization key used to authorize this acocunt.
         """
         return self.__authKey
 
     @property
     def UserId(self) -> int:
-        """
-        User ID of this account.
+        """User ID of this account.
         """
         return self.__UserId
 
     @property
     def MainDcId(self) -> DcId:
-        """
-        The main Data Center ID this account connects to.
+        """The main Data Center ID this account connects to.
         """
         return self.__MainDcId
 
@@ -802,12 +787,11 @@ class Account(BaseObject):
         return self.__isLoaded
 
     def start(self) -> bool:
-        raise NotImplementedError()
+        raise NotImplementedError
         return self.isAuthorized()
 
     def prepareToStart(self, localKey: td.AuthKey) -> td.MTP.Config:
-        """
-        Prepare the account before starting it
+        """Prepare the account before starting it
 
         ### Arguments:
             localKey (`AuthKey`):
@@ -816,7 +800,6 @@ class Account(BaseObject):
         ### Returns:
             `MTP.Config`: [description]
         """
-
         self.__localKey = localKey
         self.__MtpConfig = self._local.start(localKey)
         return self.__MtpConfig
@@ -842,7 +825,7 @@ class Account(BaseObject):
         Expects(
             self.authKey != None,
             exception=TDataAuthKeyNotFound(
-                "Could not find the main authKey, are you sure the data is correct?"
+                "Could not find the main authKey, are you sure the data is correct?",
             ),
         )
 
@@ -876,7 +859,7 @@ class Account(BaseObject):
             for i in range(key_count):
                 dcId = DcId(stream.readInt32())
                 keys.append(
-                    td.AuthKey.FromStream(stream, td.AuthKeyType.ReadFromFile, dcId)
+                    td.AuthKey.FromStream(stream, td.AuthKeyType.ReadFromFile, dcId),
                 )
 
         self.__mtpKeys.clear()
@@ -893,7 +876,7 @@ class Account(BaseObject):
         Expects(
             self.__authKey != None,
             exception=TDataAuthKeyNotFound(
-                "Could not find authKey, the data might has been corrupted"
+                "Could not find authKey, the data might has been corrupted",
             ),
         )
 
@@ -937,10 +920,9 @@ class Account(BaseObject):
         self._local._writeData(baseGlobalPath, keyFile)
 
     def SaveTData(
-        self, basePath: str = None, passcode: str = None, keyFile: str = None
+        self, basePath: str = None, passcode: str = None, keyFile: str = None,
     ) -> None:
-        """
-        Save this account to a folder
+        """Save this account to a folder
 
         ### Arguments:
             basePath (`str`, default=`None`):
@@ -961,7 +943,6 @@ class Account(BaseObject):
             td.SaveTData()
         ```
         """
-
         if basePath == None:
             basePath = self.basePath
 
@@ -1023,12 +1004,12 @@ class Account(BaseObject):
         Expects(
             self.isLoaded(),
             TDAccountNotLoaded(
-                "I'm not loaded yet, are you sure you're using me correctly?"
+                "I'm not loaded yet, are you sure you're using me correctly?",
             ),
         )
 
         return await tl.TelegramClient.FromTDesktop(
-            self, session=session, flag=flag, api=api, password=password, **kwargs
+            self, session=session, flag=flag, api=api, password=password, **kwargs,
         )
 
     @staticmethod
@@ -1051,13 +1032,13 @@ class Account(BaseObject):
                     await telethonClient.connect()
                 except OSError as e:
                     raise TelethonUnauthorized(
-                        "Could not connect telethon client to the server, please try to connect manually"
+                        "Could not connect telethon client to the server, please try to connect manually",
                     ) from e
 
                 Expects(
                     await telethonClient.is_user_authorized(),
                     exception=TelethonUnauthorized(
-                        "Telethon client is unauthorized, it need to be authorized first"
+                        "Telethon client is unauthorized, it need to be authorized first",
                     ),
                 )
 
@@ -1071,12 +1052,12 @@ class Account(BaseObject):
         dcId = DcId(ss.dc_id)
         userId = copy.UserId
         authKey = td.AuthKey(authKey, td.AuthKeyType.ReadFromFile, dcId)
-        
+
         if userId == None:
             await copy.connect()
             await copy.get_me()
             userId = copy.UserId
-            
+
         newAccount = None
 
         if owner != None:
@@ -1085,7 +1066,7 @@ class Account(BaseObject):
                 owner.accountsCount < td.TDesktop.kMaxAccounts,
                 exception=MaxAccountLimit(
                     "You can't have more than 3 accounts in one TDesktop clent.\n"
-                    "Please create another instance of TDesktop or use Account.FromTelethon() to create an Account() independently"
+                    "Please create another instance of TDesktop or use Account.FromTelethon() to create an Account() independently",
                 ),
             )
 

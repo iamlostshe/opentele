@@ -1,6 +1,8 @@
-import os, sys, pathlib
-import re
 import atexit
+import os
+import pathlib
+import re
+import sys
 
 base_dir = pathlib.Path(__file__).parent.parent.absolute().__str__()
 sys.path.insert(1, base_dir)
@@ -17,7 +19,7 @@ def on_exit():
 def on_init():
 
     os.rename(debug_py, debug_bk_py)
-    src = open(debug_bk_py, "r")
+    src = open(debug_bk_py)
     dst = open(debug_py, "w")
     content = src.read()
     content = re.sub(r"IS_DEBUG_MODE =(.*)", "IS_DEBUG_MODE = True", content)
@@ -30,31 +32,32 @@ def on_init():
 on_init()
 
 
+import typing as t
+
+import pytest
+from _pytest._io import TerminalWriter
+from telethon.errors.rpcerrorlist import FreshResetAuthorisationForbiddenError
+
+from src.api import API, APIData, CreateNewSession, UseCurrentSession
 from src.td import TDesktop
 from src.td.account import Account
 from src.tl.telethon import TelegramClient
-from src.api import API, APIData, CreateNewSession, UseCurrentSession
-from telethon.errors.rpcerrorlist import FreshResetAuthorisationForbiddenError
-
-import pytest
-import typing as t
-from _pytest._io import TerminalWriter
 
 X1 = "!thedemons#opentele"
 X2 = "opentele#thedemons!"
 
 
 def PythonVersion():
-    return "{}.{}".format(sys.version_info.major, sys.version_info.minor)
+    return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 def profile_path():
-    return "tests/test_profile{}".format(PythonVersion())
+    return f"tests/test_profile{PythonVersion()}"
 
 
 def test_random_api():
 
-    API_TYPE = t.Union[APIData, t.Type[APIData]]
+    API_TYPE = t.Union[APIData, type[APIData]]
 
     def cmp(src: API_TYPE, dst: API_TYPE) -> bool:
         return (
@@ -68,7 +71,7 @@ def test_random_api():
             and src.lang_pack == dst.lang_pack
         )
 
-    apis: t.List[API_TYPE] = [
+    apis: list[API_TYPE] = [
         API.TelegramDesktop,
         API.TelegramAndroid,
         API.TelegramAndroidX,
@@ -162,7 +165,7 @@ async def telethon_from_tdata():
     assert tdesk.isLoaded()
 
     oldClient = await TelegramClient.FromTDesktop(
-        tdesk, flag=UseCurrentSession, api=api_ios
+        tdesk, flag=UseCurrentSession, api=api_ios,
     )
     tdesk = await TDesktop.FromTelethon(oldClient, UseCurrentSession, api=api_ios)
 
@@ -183,7 +186,7 @@ async def telethon_from_tdata():
 
     tdesk = await TDesktop.FromTelethon(oldClient, UseCurrentSession, api=api_ios)
     oldClient = await TelegramClient.FromTDesktop(
-        tdesk, flag=UseCurrentSession, api=api_ios
+        tdesk, flag=UseCurrentSession, api=api_ios,
     )
 
     tdesk = await TDesktop.FromTelethon(oldClient, UseCurrentSession, api=api_ios)
@@ -209,12 +212,12 @@ async def check_telegramclient():
     assert TelegramClient(None, None, 1234, "opentele").api_id == 1234
 
     oldClient = await TelegramClient.FromTDesktop(
-        tdesk, flag=UseCurrentSession, api=api_ios
+        tdesk, flag=UseCurrentSession, api=api_ios,
     )
 
     try:
         await oldClient.TerminateSession(0)
-    except BaseException as e:
+    except BaseException:
         pass
 
     await oldClient.connect()
@@ -226,7 +229,7 @@ async def check_telegramclient():
 
     try:
         await oldClient.TerminateSession(0)
-    except BaseException as e:
+    except BaseException:
         pass
 
     assert await oldClient.TerminateAllSessions()
@@ -244,7 +247,7 @@ async def test_entry_point(event_loop):
     event_loop.close = lambda: None
 
     ter.write("\n\n")
-    ter.sep("=", "Begin testing for Python {}".format(PythonVersion()), cyan=True)
+    ter.sep("=", f"Begin testing for Python {PythonVersion()}", cyan=True)
 
     await tdata_to_telethon()
     await telethon_from_tdata()

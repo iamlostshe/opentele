@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Coroutine, Tuple, Type, Callable, TypeVar, Optional, List, Any, Dict
-from types import FunctionType
-
 import abc
+from collections.abc import Callable, Coroutine
+from types import FunctionType
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 _T = TypeVar("_T")
 _TCLS = TypeVar("_TCLS", bound=type)
@@ -15,7 +15,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 class BaseMetaClass(abc.ABCMeta):  # pragma: no cover
     def __new__(
-        cls: Type[_T], clsName: str, bases: Tuple[type], attrs: Dict[str, Any]
+        cls: type[_T], clsName: str, bases: tuple[type], attrs: dict[str, Any],
     ) -> _T:
 
         # Hook all subclass methods
@@ -32,7 +32,7 @@ class BaseMetaClass(abc.ABCMeta):  # pragma: no cover
 
             for attr, val in attrs.items():
                 if (
-                    not attr in ignore_list
+                    attr not in ignore_list
                     and callable(val)
                     and not isinstance(val, type)
                 ):
@@ -44,13 +44,12 @@ class BaseMetaClass(abc.ABCMeta):  # pragma: no cover
         return result
 
 
-class BaseObject(object, metaclass=BaseMetaClass):
+class BaseObject(metaclass=BaseMetaClass):
     pass
 
 
-class override(object):  # nocov
-    """
-    To use inside a class decorated with @extend_class
+class override:  # nocov
+    """To use inside a class decorated with @extend_class
     Any attributes decorated with @override will be replaced
     """
 
@@ -59,7 +58,7 @@ class override(object):  # nocov
         # check if decorated_cls really is a function
         if not isinstance(decorated_func, FunctionType):
             raise TypeError(
-                "@override decorator is only for functions, not classes"
+                "@override decorator is only for functions, not classes",
             )
 
         decorated_func.__isOverride__ = True  # type: ignore
@@ -72,9 +71,8 @@ class override(object):  # nocov
         return func.__isOverride__
 
 
-class extend_class(object):  # nocov
-    """
-    Extend a class, all attributes will be added to its parents
+class extend_class:  # nocov
+    """Extend a class, all attributes will be added to its parents
     This won't override attributes that are already existed, please refer to @override or @extend_override_class to do this
     """
 
@@ -93,7 +91,7 @@ class extend_class(object):  # nocov
         # check if decorated_cls really is a class (type)
         if not isinstance(decorated_cls, type):
             raise TypeError(
-                "@extend_class decorator is only for classes, not functions"
+                "@extend_class decorator is only for classes, not functions",
             )
 
         newAttributes = dict(decorated_cls.__dict__)
@@ -113,7 +111,7 @@ class extend_class(object):  # nocov
             for attributeName, attributeValue in newAttributes.items():
 
                 # Игнорируем специальные атрибуты
-                if attributeName.startswith('__') and attributeName.endswith('__'):
+                if attributeName.startswith("__") and attributeName.endswith("__"):
                     continue
 
                 # check if class base already has this attribute
@@ -122,21 +120,20 @@ class extend_class(object):  # nocov
                 if result is not None:
                     if id(result["value"]) == id(attributeValue):
                         crossDelete[attributeName] = attributeValue
-                    else:
 
-                        # if not override this attribute
-                        if not override.isOverride(attributeValue):
-                            print(
-                                f"[{attributeName}] {id(result['value'])} - {id(attributeValue)}"
-                            )
-                            raise TypeError("Attribute conflict detected. Use @override to override existing attributes.")
+                    # if not override this attribute
+                    elif not override.isOverride(attributeValue):
+                        print(
+                            f"[{attributeName}] {id(result['value'])} - {id(attributeValue)}",
+                        )
+                        raise TypeError("Attribute conflict detected. Use @override to override existing attributes.")
 
             [newAttributes.pop(cross) for cross in crossDelete]
 
         for attributeName, attributeValue in newAttributes.items():
 
             # Игнорируем специальные атрибуты
-            if attributeName.startswith('__') and attributeName.endswith('__'):
+            if attributeName.startswith("__") and attributeName.endswith("__"):
                 continue
 
             # let's backup this attribute for future uses
@@ -160,7 +157,7 @@ class extend_class(object):  # nocov
         return decorated_cls
 
     @staticmethod
-    def object_hierarchy_getattr(obj: object, attributeName: str) -> List[str]:
+    def object_hierarchy_getattr(obj: object, attributeName: str) -> list[str]:
 
         results = []
         if type(obj) == object:
@@ -181,7 +178,7 @@ class extend_class(object):  # nocov
         return results
 
     @staticmethod
-    def getattr(obj: object, attributeName: str) -> Optional[dict]:
+    def getattr(obj: object, attributeName: str) -> dict | None:
         try:
             value = getattr(obj, attributeName)
             return {"owner": obj, "value": value}
@@ -190,8 +187,7 @@ class extend_class(object):  # nocov
 
 
 class extend_override_class(extend_class):
-    """
-    Extend a class, all attributes will be added to its parents
+    """Extend a class, all attributes will be added to its parents
     If those attributes are already existed, they will be replaced by the new one
     """
 
@@ -210,7 +206,7 @@ class sharemethod(type):
     def __set_name__(self, owner, name):
         self.__owner__ = owner
 
-    def __new__(cls: Type[_T], func: _F) -> Type[_F]:
+    def __new__(cls: type[_T], func: _F) -> type[_F]:
 
         clsName = func.__class__.__name__
         bases = func.__class__.__bases__

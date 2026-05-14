@@ -1,15 +1,13 @@
 from __future__ import annotations
+
 import os
-
 import platform
+import typing
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-from typing import Any, List, Dict, Type, TypeVar, Union, Optional
 from .devices import *
 from .exception import *
 from .utils import *
-
-import typing
-
 
 _T = TypeVar("_T")
 _RT = TypeVar("_RT")
@@ -19,8 +17,8 @@ class BaseAPIMetaClass(BaseMetaClass):
     """Super high level tactic metaclass"""
 
     def __new__(
-        cls: Type[_T], clsName: str, bases: Tuple[type], attrs: Dict[str, Any]
-    ) -> _T:
+        cls, clsName: str, bases: Tuple[type], attrs: dict[str, Any],
+    ) -> typing.Self:
 
         result = super().__new__(cls, clsName, bases, attrs)
         result._clsMakePID()  # type: ignore
@@ -43,8 +41,8 @@ class BaseAPIMetaClass(BaseMetaClass):
             if (
                 attr.startswith(f"_{cls.__base__.__name__}__")
                 or attr.startswith(f"_{cls.__name__}__")
-                or attr.startswith("__")
-                and attr.endswith("__")
+                or (attr.startswith("__")
+                and attr.endswith("__"))
                 or type(val) == classmethod
                 or callable(val)
             ):
@@ -55,9 +53,8 @@ class BaseAPIMetaClass(BaseMetaClass):
         return result + "}"
 
 
-class APIData(object, metaclass=BaseAPIMetaClass):
-    """
-    API configuration to connect to `TelegramClient` and `TDesktop`
+class APIData(metaclass=BaseAPIMetaClass):
+    """API configuration to connect to `TelegramClient` and `TDesktop`
 
     ### Attributes:
         api_id (`int`):
@@ -88,7 +85,7 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         `Generate()`: Generate random device model and system version
     """
 
-    CustomInitConnectionList: List[Union[Type[APIData], APIData]] = []
+    CustomInitConnectionList: list[type[APIData] | APIData] = []
 
     api_id: int = None  # type: ignore
     api_hash: str = None  # type: ignore
@@ -115,8 +112,7 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         system_lang_code: str = None,
         lang_pack: str = None,
     ) -> None:
-        """
-        Create your own customized API
+        """Create your own customized API
 
         ### Arguments:
             api_id (`int`):
@@ -193,7 +189,7 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         self._makePID()
 
     @sharemethod
-    def copy(glob: Union[Type[_T], _T] = _T) -> _T:  # type: ignore
+    def copy(glob: type[_T] | _T = _T) -> _T:  # type: ignore
 
         cls = glob if isinstance(glob, type) else glob.__class__
 
@@ -209,11 +205,11 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         )  # type: ignore
 
     @sharemethod
-    def get_cls(glob: Union[Type[_T], _T]) -> Type[_T]:  # type: ignore
+    def get_cls(glob: type[_T] | _T) -> type[_T]:  # type: ignore
         return glob if isinstance(glob, type) else glob.__class__
 
     @sharemethod
-    def destroy(glob: Union[Type[_T], _T]):  # type: ignore
+    def destroy(glob: type[_T] | _T):  # type: ignore
         if isinstance(glob, type):
             return
 
@@ -238,7 +234,7 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         return pid
 
     @classmethod
-    def _clsMakePID(cls: Type[APIData]):
+    def _clsMakePID(cls: type[APIData]):
         cls.pid = cls._makePIDEnsure()
         cls.CustomInitConnectionList.append(cls)
 
@@ -247,9 +243,8 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         self.get_cls().CustomInitConnectionList.append(self)
 
     @classmethod
-    def Generate(cls: Type[_T], unique_id: str = None) -> _T:
-        """
-        Generate random device model and system version
+    def Generate(cls, unique_id: str = None) -> typing.Self:
+        """Generate random device model and system version
 
         ### Arguments:
             unique_id (`str`, default=`None`):
@@ -283,13 +278,13 @@ class APIData(object, metaclass=BaseAPIMetaClass):
         # elif cls == API.TelegramWeb_K or cls == API.TelegramWeb_Z or cls == API.Webogram:
         else:
             raise NotImplementedError(
-                f"{cls.__name__} device not supported for randomize yet"
+                f"{cls.__name__} device not supported for randomize yet",
             )
 
         return cls(device_model=deviceInfo.model, system_version=deviceInfo.version)
 
     @classmethod
-    def findData(cls: Type[_T], pid: int) -> Optional[_T]:
+    def findData(cls, pid: int) -> typing.Self | None:
         for x in cls.CustomInitConnectionList:  # type: ignore
             if x.pid == pid:
                 return x
@@ -297,8 +292,7 @@ class APIData(object, metaclass=BaseAPIMetaClass):
 
 
 class API(BaseObject):
-    """
-    #### Built-in templates for Telegram API
+    """#### Built-in templates for Telegram API
     - **`opentele`** offers the ability to use **`official APIs`**, which are used by `official apps`.
     - According to [Telegram TOS](https://core.telegram.org/api/obtaining_api_id#using-the-api-id): *all accounts that sign up or log in using unofficial Telegram API clients are automatically put under observation to avoid violations of the Terms of Service*.
     - It also uses the **[lang_pack](https://core.telegram.org/method/initConnection)** parameter, of which [telethon can't use](https://github.com/LonamiWebs/Telethon/blob/master/telethon/_client/telegrambaseclient.py#L192) because it's for official apps only.
@@ -332,8 +326,7 @@ class API(BaseObject):
     """
 
     class TelegramDesktop(APIData):
-        """
-        Official Telegram for Desktop (Windows, macOS and Linux)
+        """Official Telegram for Desktop (Windows, macOS and Linux)
         [View on GitHub](https://github.com/telegramdesktop/tdesktop)
 
         ### Attributes:
@@ -362,10 +355,9 @@ class API(BaseObject):
         @typing.overload
         @classmethod
         def Generate(
-            cls: Type[_T], system: str = "windows", unique_id: str = None
+            cls: type[_T], system: str = "windows", unique_id: str = None,
         ) -> _T:
-            """
-            Generate random TelegramDesktop devices
+            """Generate random TelegramDesktop devices
             ### Arguments:
                 system (`str`, default=`"random"`):
                     Which OS to generate, either `"windows"`, `"macos"`, or `"linux"`.\\
@@ -402,28 +394,28 @@ class API(BaseObject):
 
         @typing.overload
         @classmethod
-        def Generate(cls: Type[_T], system: str = "macos", unique_id: str = None) -> _T:
+        def Generate(cls: type[_T], system: str = "macos", unique_id: str = None) -> _T:
             pass
 
         @typing.overload
         @classmethod
-        def Generate(cls: Type[_T], system: str = "linux", unique_id: str = None) -> _T:
+        def Generate(cls: type[_T], system: str = "linux", unique_id: str = None) -> _T:
             pass
 
         @typing.overload
         @classmethod
         def Generate(
-            cls: Type[_T], system: str = "random", unique_id: str = None
+            cls: type[_T], system: str = "random", unique_id: str = None,
         ) -> _T:
             pass
 
         @classmethod
-        def Generate(cls: Type[_T], system: str = None, unique_id: str = None) -> _T:
+        def Generate(cls, system: str = None, unique_id: str = None) -> typing.Self:
 
             validList = ["windows", "macos", "linux"]
             if system == None or system not in validList:
                 system = SystemInfo._hashtovalue(
-                    SystemInfo._strtohashid(unique_id), validList
+                    SystemInfo._strtohashid(unique_id), validList,
                 )
 
             system = system.lower()
@@ -440,8 +432,7 @@ class API(BaseObject):
             return cls(device_model=deviceInfo.model, system_version=deviceInfo.version)
 
     class TelegramAndroid(APIData):
-        """
-        Official Telegram for Android
+        """Official Telegram for Android
         [View on GitHub](https://github.com/DrKLO/Telegram)
 
         ### Attributes:
@@ -465,8 +456,7 @@ class API(BaseObject):
         lang_pack = "android"
 
     class TelegramAndroidX(APIData):
-        """
-        Official TelegramX for Android
+        """Official TelegramX for Android
         [View on GitHub](https://github.com/DrKLO/Telegram)
 
         ### Attributes:
@@ -490,8 +480,7 @@ class API(BaseObject):
         lang_pack = "android"
 
     class TelegramIOS(APIData):
-        """
-        Official Telegram for iOS
+        """Official Telegram for iOS
         [View on GitHub](https://github.com/TelegramMessenger/Telegram-iOS)
 
         ### Attributes:
@@ -517,8 +506,7 @@ class API(BaseObject):
         lang_pack = "ios"
 
     class TelegramMacOS(APIData):
-        """
-        Official Telegram-Swift For MacOS
+        """Official Telegram-Swift For MacOS
         [View on GitHub](https://github.com/overtake/TelegramSwift)
 
         ### Attributes:
@@ -544,8 +532,7 @@ class API(BaseObject):
         lang_pack = "macos"
 
     class TelegramWeb_Z(APIData):
-        """
-        Default Official Telegram Web Z For Browsers
+        """Default Official Telegram Web Z For Browsers
         [View on GitHub](https://github.com/Ajaxy/telegram-tt) | [Visit on Telegram](https://web.telegram.org/z/)
 
         ### Attributes:
@@ -570,8 +557,7 @@ class API(BaseObject):
         # You can read its source here: https://github.com/Ajaxy/telegram-tt/blob/f7bc473d51c0fe3a3e8b22678b62d2360225aa7c/src/lib/gramjs/client/TelegramClient.js#L131
 
     class TelegramWeb_K(APIData):
-        """
-        Official Telegram Web K For Browsers
+        """Official Telegram Web K For Browsers
         [View on GitHub](https://github.com/morethanwords/tweb) | [Visit on Telegram](https://web.telegram.org/k/)
 
         ### Attributes:
@@ -595,8 +581,7 @@ class API(BaseObject):
         lang_pack = "macos"  # I"m totally confused, why macos? https://github.dev/morethanwords/tweb/blob/26582590e647766f5890c79e1611c54c1e6e800c/src/config/app.ts#L23
 
     class Webogram(APIData):
-        """
-        Old Telegram For Browsers
+        """Old Telegram For Browsers
         [View on GitHub](https://github.com/zhukov/webogram) | [Vist on Telegram](https://web.telegram.org/?legacy=1#/im)
 
         ### Attributes:
@@ -621,8 +606,7 @@ class API(BaseObject):
 
 
 class LoginFlag(int):
-    """
-    Login flag for converting sessions between `TDesktop` and `TelegramClient`.
+    """Login flag for converting sessions between `TDesktop` and `TelegramClient`.
 
     ### Attributes:
         UseCurrentSession (LoginFlag): Use the current session.
@@ -638,8 +622,7 @@ class LoginFlag(int):
 
 
 class UseCurrentSession(LoginFlag):
-    """
-    Use the current session.
+    """Use the current session.
     - Convert an already-logged in session of `Telegram Desktop` to `Telethon` and vice versa.
     - The "session" is just an 256-bytes `AuthKey` that get stored in `tdata folder` or Telethon `session files` [(under sqlite3 format)](https://docs.telethon.dev/en/latest/concepts/sessions.html?highlight=sqlite3#what-are-sessions).
     - `UseCurrentSession`'s only job is to read this key and convert it to one another.
@@ -654,8 +637,7 @@ class UseCurrentSession(LoginFlag):
 
 
 class CreateNewSession(LoginFlag):
-    """
-    Create a new session.
+    """Create a new session.
     - Use the `current session` to authorize the `new session` by [Login via QR code](https://core.telegram.org/api/qr-login).
     - This works just like when you signing into `Telegram` using `QR Login` on mobile devices.
     - Although `Telegram Desktop` doesn't let you authorize other sessions via `QR Code` *(or it doesn't have that feature)*, it is still available across all platforms `(``[APIs](API)``)`.

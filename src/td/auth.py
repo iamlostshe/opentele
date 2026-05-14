@@ -1,16 +1,16 @@
 from __future__ import annotations
-from .configs import *
-from . import shared as td
 
 import hashlib
+
+from . import shared as td
+from .configs import *
 
 # if TYPE_CHECKING:
 #     from ..opentele import *
 
 
 class AuthKeyType(IntEnum):
-    """
-    Type of `AuthKey`
+    """Type of `AuthKey`
 
     ### Attributes:
         Generated (`IntEnum`):
@@ -33,8 +33,7 @@ class AuthKeyType(IntEnum):
 
 
 class AuthKey(BaseObject):
-    """
-    Authorization key used for [MTProto](https://core.telegram.org/mtproto)
+    """Authorization key used for [MTProto](https://core.telegram.org/mtproto)
     It's also used to encrypt and decrypt local tdata
 
     ### Attributes:
@@ -51,7 +50,7 @@ class AuthKey(BaseObject):
 
     kSize = 256
 
-    def __init__(self, key: bytes = bytes(), type: AuthKeyType = AuthKeyType.Generated, dcId: DcId = DcId.Invalid) -> None:  # type: ignore
+    def __init__(self, key: bytes = b"", type: AuthKeyType = AuthKeyType.Generated, dcId: DcId = DcId.Invalid) -> None:  # type: ignore
         self.__type = type
         self.__dcId = dcId
         self.__key = key
@@ -79,7 +78,7 @@ class AuthKey(BaseObject):
         self.__keyId = int.from_bytes(hash[12 : 12 + 8], "little")
 
     def prepareAES_oldmtp(
-        self, msgKey: bytes, send: bool
+        self, msgKey: bytes, send: bool,
     ) -> typing.Tuple[bytes, bytes]:
         x = 0 if send else 8
         sha1_a = hashlib.sha1(msgKey[:16] + self.__key[x : x + 32]).digest()
@@ -87,7 +86,7 @@ class AuthKey(BaseObject):
         sha1_b = hashlib.sha1(
             self.__key[x + 32 : x + 32 + 16]
             + msgKey[:16]
-            + self.__key[x + 48 : x + 48 + 16]
+            + self.__key[x + 48 : x + 48 + 16],
         ).digest()
 
         sha1_c = hashlib.sha1(self.__key[x + 64 : x + 64 + 32] + msgKey[:16]).digest()

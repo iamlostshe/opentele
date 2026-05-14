@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-
-from .configs import *
-from . import shared as td
-
 import logging
+
 from telethon.network.connection.connection import Connection
 from telethon.network.connection.tcpfull import ConnectionTcpFull
 from telethon.sessions.abstract import Session
+
+from . import shared as td
+from .configs import *
 
 # if TYPE_CHECKING:
 #     from . import *
 
 
 class TDesktop(BaseObject):
-    """
-    Telegram Desktop client.
+    """Telegram Desktop client.
     
     A client can have multiple accounts, up to 3 - according to official Telegram Desktop client.
 
@@ -106,8 +105,7 @@ class TDesktop(BaseObject):
         passcode: str = None,
         keyFile: str = None,
     ) -> None:
-        """
-        Initialize a `TDesktop` client
+        """Initialize a `TDesktop` client
 
         ### Arguments:
             basePath (`str`, default=`None`):
@@ -126,7 +124,7 @@ class TDesktop(BaseObject):
         self.__accounts: typing.List[td.Account] = []
         self.__basePath = basePath
         self.__keyFile = keyFile if (keyFile != None) else TDesktop.kDefaultKeyFile
-        self.__passcode = passcode if (passcode != None) else str("")
+        self.__passcode = passcode if (passcode != None) else ""
         self.__passcodeBytes = self.__passcode.encode("ascii")
         self.__mainAccount: Optional[td.Account] = None
         self.__active_index = -1
@@ -141,16 +139,14 @@ class TDesktop(BaseObject):
             self.LoadTData()
 
     def isLoaded(self) -> bool:
-        """
-        Return `True` if the client has successfully loaded accounts from `tdata` or `TelegramClient`
+        """Return `True` if the client has successfully loaded accounts from `tdata` or `TelegramClient`
         """
         return self.__isLoaded
 
     def LoadTData(
-        self, basePath: str = None, passcode: str = None, keyFile: str = None
+        self, basePath: str = None, passcode: str = None, keyFile: str = None,
     ):
-        """
-        Loads accounts from `tdata folder`
+        """Loads accounts from `tdata folder`
 
         ### Arguments:
             basePath (`str`, default=`None`):
@@ -186,7 +182,6 @@ class TDesktop(BaseObject):
             tdesk.SaveTData("new_tdata")
         ```
         """
-
         if basePath == None:
             basePath = self.basePath
 
@@ -206,22 +201,19 @@ class TDesktop(BaseObject):
             if isinstance(e, TDataBadDecryptKey):
                 if self.passcode == "":
                     raise TDataBadDecryptKey(
-                        "The tdata folder is password-encrypted, please the set the argument 'passcode' to decrypt it"
+                        "The tdata folder is password-encrypted, please the set the argument 'passcode' to decrypt it",
                     )
-                else:
-                    raise TDataBadDecryptKey(
-                        "Failed to decrypt tdata folder because of invalid passcode"
-                    )
-            else:
-                raise e
+                raise TDataBadDecryptKey(
+                    "Failed to decrypt tdata folder because of invalid passcode",
+                )
+            raise e
 
         Expects(self.isLoaded(), "Failed to load? Something went seriously wrong")
 
     def SaveTData(
-        self, basePath: str = None, passcode: str = None, keyFile: str = None
+        self, basePath: str = None, passcode: str = None, keyFile: str = None,
     ) -> bool:
-        """
-        Save the client session to a folder.
+        """Save the client session to a folder.
 
         ### Arguments:
             basePath (`str`, default=None):
@@ -320,10 +312,10 @@ class TDesktop(BaseObject):
                 b"\xaf\xc4\x0d\x06\x01\xbb\xed\x11\x09\x09\x69\xf7\x4d\x9a\xb0\xcc\x97\x82\x75\x46\xf4\x41\x24\x2d\x2c\xfb\x8e\x05\xa0\x61\x0e\x97"
                 b"\x66\x9c\x0d\xa1\xad\xcc\xb5\x6e\x39\xe1\x0c\x69\xe2\x94\x23\x87\xff\x49\x22\xf8\xc5\x5d\xcb\x88\x90\xe3\x45\xef\x31\x82\x66\xf4"
                 b"\xb3\x83\x14\x30\xea\x21\x0c\x86\x3c\x17\x62\x4c\x04\x94\xcd\xea\xd8\x1f\x52\x34\x30\xb5\xf7\x4c\x15\xda\x32\x3d\x76\x6b\xd0\x1c"
-                b"\xb5\xb8\x8b\x9d\x2a\x73\x1f\x6d\x85\x33\x80\xad\x30\x6a\x86\x47\xfa\x61\x4c\xc4\x01\x7f\x08\x90\x2c\x1e\x1f\x99\x7e\xe1\x2e\x3c"
+                b"\xb5\xb8\x8b\x9d\x2a\x73\x1f\x6d\x85\x33\x80\xad\x30\x6a\x86\x47\xfa\x61\x4c\xc4\x01\x7f\x08\x90\x2c\x1e\x1f\x99\x7e\xe1\x2e\x3c",
             )
             self.__passcodeKeySalt = QByteArray(
-                b"\xae\xd1\xe0\x82\x99\x42\x81\xd9\x75\x76\x0e\x72\x95\x60\xd2\xc8\xd0\x08\xf2\xa9\xdd\x3f\xf4\xd8\x32\x45\xe2\x2e\xed\xb6\x67\x16"
+                b"\xae\xd1\xe0\x82\x99\x42\x81\xd9\x75\x76\x0e\x72\x95\x60\xd2\xc8\xd0\x08\xf2\xa9\xdd\x3f\xf4\xd8\x32\x45\xe2\x2e\xed\xb6\x67\x16",
             )
             self.__passcodeKey = td.AuthKey(
                 b"\x27\x3e\x64\x83\xb3\x13\xc9\xdb\xc4\xac\xd9\x17\x38\x64\xc0\x42\x2f\x17\x28\x81\xbf\xe1\xc6\x64\x9c\xa5\x53\x86\x54\xd0\xbd\x6e"
@@ -333,7 +325,7 @@ class TDesktop(BaseObject):
                 b"\xe4\x2b\x96\x96\x60\x4d\xe1\xe3\x4a\xe4\x0f\x6b\xba\x14\x4a\x28\x4f\x3a\xd8\x84\x32\x53\xec\x9b\x39\x71\x86\x3a\x2c\x40\x92\x08"
                 b"\xc2\x56\x39\x67\xb3\x58\x7e\x50\x9b\x42\xa4\x2a\x60\x40\xd2\x3f\xf6\x96\xad\x55\x2a\x24\x00\x84\xfa\x3f\x95\x02\x40\xf4\x99\xb2"
                 b"\x3c\xd6\xd2\x7e\x70\x10\xcb\xde\x07\xda\xae\x06\x67\xa7\xdf\x8a\x51\x15\xa6\x0b\x26\x5c\x58\xf5\xd9\x29\x1f\x7a\x98\xfc\x3c\x60"
-                b"\x1e\x2a\x4a\x32\xf1\x88\x1b\x82\x18\xc8\x55\x23\x9d\x7b\x53\x29\x59\x60\x9e\x6a\xb5\x2e\x48\xad\x69\x1c\x25\x83\xb5\x66\xc8\xf9"
+                b"\x1e\x2a\x4a\x32\xf1\x88\x1b\x82\x18\xc8\x55\x23\x9d\x7b\x53\x29\x59\x60\x9e\x6a\xb5\x2e\x48\xad\x69\x1c\x25\x83\xb5\x66\xc8\xf9",
             )
             self.__passcodeKeyEncrypted = QByteArray(
                 b"\x97\xdf\x0c\xd2\xe3\x10\x91\x49\xb7\x7b\x52\x87\x99\x4d\x9c\x1c\xa2\x40\xc5\x1e\x87\x48\x8e\x79"
@@ -347,7 +339,7 @@ class TDesktop(BaseObject):
                 b"\x14\x8e\x7e\x15\xf4\x31\x90\x4f\xa7\x9c\x68\x27\xee\x42\x6d\x3a\xb9\xcb\xa9\x36\xeb\x33\xd4\x85"
                 b"\xdb\x88\xa6\xf0\xff\x97\x22\xa6\xd6\x2f\xf7\x88\x34\x7e\x27\xc8\x2e\x9e\x13\x9e\xb0\x3a\xe5\x21"
                 b"\x53\x9b\xf3\xd3\x63\xb4\xba\xea\x76\xe5\xe8\x84\xcf\x66\xfe\x6b\xcd\x8a\x9e\x08\x9d\x36\x40\x5d"
-                b"\xb9\x9d\x01\xdb\x20\x46\x4f\xb6\xca\xbb\xdc\xe4\xf6\x7e\x4e\xc3\x74\x2f\x91\x3a\x1d\xd2\xda\xc5"
+                b"\xb9\x9d\x01\xdb\x20\x46\x4f\xb6\xca\xbb\xdc\xe4\xf6\x7e\x4e\xc3\x74\x2f\x91\x3a\x1d\xd2\xda\xc5",
             )
 
         else:
@@ -358,17 +350,17 @@ class TDesktop(BaseObject):
             self.__localKey = td.Storage.CreateLocalKey(_salt, _pass)
 
             self.__passcodeKeySalt = td.Storage.RandomGenerate(
-                LocalEncryptSaltSize
+                LocalEncryptSaltSize,
             )  # LocalEncryptSaltSize = 32
             self.__passcodeKey = td.Storage.CreateLocalKey(
-                self.__passcodeKeySalt, QByteArray(self.__passcodeBytes)
+                self.__passcodeKeySalt, QByteArray(self.__passcodeBytes),
             )
 
             passKeyData = td.Storage.EncryptedDescriptor(td.AuthKey.kSize)
             self.__localKey.write(passKeyData.stream)
 
             self.__passcodeKeyEncrypted = td.Storage.PrepareEncrypted(
-                passKeyData, self.__passcodeKey
+                passKeyData, self.__passcodeKey,
             )
 
             # set new local key for self.accounts
@@ -417,7 +409,7 @@ class TDesktop(BaseObject):
 
         self.__AppVersion = keyData.version
         self.__passcodeKey = td.Storage.CreateLocalKey(
-            salt, QByteArray(self.__passcodeBytes)
+            salt, QByteArray(self.__passcodeBytes),
         )
 
         keyInnerData = td.Storage.DecryptLocal(keyEncrypted, self.passcodeKey)  # type: ignore
@@ -447,7 +439,7 @@ class TDesktop(BaseObject):
                     if account.isLoaded():
                         self.accounts.append(account)
 
-                except OpenTeleException as e:
+                except OpenTeleException:
                     pass
 
         Expects(len(self.accounts) > 0, "No account has been loaded")
@@ -478,9 +470,7 @@ class TDesktop(BaseObject):
         api: Union[Type[APIData], APIData] = API.TelegramDesktop,
         password: str = None,
     ) -> tl.TelegramClient:
-        """
-        
-        ### Arguments:
+        """### Arguments:
             session (`str`, `Session`, default=`None`):
                 The file name of the `session file` to be used, if `None` then the session will not be saved.\\
                 Read more [here](https://docs.telethon.dev/en/latest/concepts/sessions.html?highlight=session#what-are-sessions).
@@ -534,7 +524,7 @@ class TDesktop(BaseObject):
         raise_last_call_error: bool = False,
         loop: asyncio.AbstractEventLoop = None,
         base_logger: Union[str, logging.Logger] = None,
-        receive_updates: bool = True
+        receive_updates: bool = True,
     ) -> tl.TelegramClient:
         pass
 
@@ -544,7 +534,7 @@ class TDesktop(BaseObject):
         flag: Type[LoginFlag] = CreateNewSession,
         api: Union[Type[APIData], APIData] = API.TelegramDesktop,
         password: str = None,
-        **kwargs
+        **kwargs,
     ) -> tl.TelegramClient:
 
         Expects(
@@ -563,7 +553,7 @@ class TDesktop(BaseObject):
             flag=flag,
             api=api,
             password=password,
-            **kwargs
+            **kwargs,
         )
 
     @staticmethod
@@ -573,8 +563,7 @@ class TDesktop(BaseObject):
         api: Union[Type[APIData], APIData] = API.TelegramDesktop,
         password: str = None,
     ) -> TDesktop:
-        """
-        Create an instance of `TDesktop` from `TelegramClient`.
+        """Create an instance of `TDesktop` from `TelegramClient`.
 
         ### Arguments:
             telethonClient (`TelegramClient`):
@@ -606,7 +595,6 @@ class TDesktop(BaseObject):
             tdesk.SaveTData("new_tdata")
         ```
         """
-
         Expects(
             (flag == CreateNewSession) or (flag == UseCurrentSession),
             LoginFlagInvalid("LoginFlag invalid"),
@@ -616,15 +604,14 @@ class TDesktop(BaseObject):
         _self.__generateLocalKey()
 
         await td.Account.FromTelethon(
-            telethonClient, flag=flag, api=api, password=password, owner=_self
+            telethonClient, flag=flag, api=api, password=password, owner=_self,
         )
 
         return _self
 
     @classmethod
     def PerformanceMode(cls, enabled: bool = True):
-        """
-        Enable or disable performance mode. See `kPerformanceMode`.
+        """Enable or disable performance mode. See `kPerformanceMode`.
         It is enabled by default.
 
         ### Arguments:
@@ -634,7 +621,7 @@ class TDesktop(BaseObject):
         """
         cls.kPerformanceMode = enabled
 
-    kMaxAccounts: int = int(3)
+    kMaxAccounts: int = 3
     """The maximum amount of accounts a client can have"""
 
     kDefaultKeyFile: str = "data"
@@ -654,8 +641,7 @@ class TDesktop(BaseObject):
 
     @property
     def api(self) -> APIData:
-        """
-        The API this client is using.
+        """The API this client is using.
         """
         return self.__api
 
@@ -667,24 +653,21 @@ class TDesktop(BaseObject):
 
     @property
     def basePath(self) -> Optional[str]:
-        """
-        Base folder of `TDesktop`, this is where data stored
+        """Base folder of `TDesktop`, this is where data stored
         Same as tdata folder of `Telegram Desktop`
         """
         return self.__basePath
 
     @property
     def passcode(self) -> str:
-        """
-        Passcode used to encrypt and decrypt data
+        """Passcode used to encrypt and decrypt data
         Same as the Local Passcode of `Telegram Desktop`
         """
         return self.__passcode
 
     @property
     def keyFile(self) -> str:
-        """
-        The default value is `"data"`, this argument is rarely ever used.
+        """The default value is `"data"`, this argument is rarely ever used.
         It is used by `Telegram Desktop` by running it with the `"-key"` argument.
         I don't know what's the use cases of it, maybe this was a legacy feature of `Telegram Desktop`.
         """
@@ -696,42 +679,37 @@ class TDesktop(BaseObject):
 
     @property
     def localKey(self) -> Optional[td.AuthKey]:
-        """
-        The key used to encrypt/decrypt data
+        """The key used to encrypt/decrypt data
         """
         return self.__localKey
 
     @property
     def AppVersion(self) -> Optional[int]:
-        """
-        App version of TDesktop client
+        """App version of TDesktop client
         """
         return self.__AppVersion
 
     @property
     def AppVersionString(self) -> Optional[str]:
-        raise NotImplementedError()
+        raise NotImplementedError
         return self.__AppVersion
 
     @property
     def accountsCount(self) -> int:
-        """
-        The number of accounts this client has
+        """The number of accounts this client has
         """
         # return self.__accountsCount
         return len(self.__accounts)
 
     @property
     def accounts(self) -> List[td.Account]:
-        """
-        List of accounts this client has\n
+        """List of accounts this client has\n
         If you want to get the main account, please use .mainAccount instead
         """
         return self.__accounts
 
     @property
     def mainAccount(self) -> Optional[td.Account]:
-        """
-        The main account of the client
+        """The main account of the client
         """
         return self.__mainAccount
